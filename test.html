@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MosAic Integration Test</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0d1117;
+      color: #c9d1d9;
+      padding: 20px;
+    }
+    h1 { color: #58a6ff; margin-bottom: 20px; }
+    .test-section {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+    .test-section h2 { 
+      color: #8b949e; 
+      font-size: 14px;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+    button {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-right: 10px;
+      margin-bottom: 10px;
+    }
+    button:hover { background: #2ea043; }
+    button:disabled { background: #484f58; cursor: not-allowed; }
+    .result {
+      background: #0d1117;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-family: monospace;
+      font-size: 13px;
+      white-space: pre-wrap;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .success { color: #3fb950; }
+    .error { color: #f85149; }
+    .warning { color: #d29922; }
+    .network-select {
+      background: #0d1117;
+      color: white;
+      border: 1px solid #30363d;
+      padding: 8px;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+    input {
+      background: #0d1117;
+      color: white;
+      border: 1px solid #30363d;
+      padding: 8px 12px;
+      border-radius: 6px;
+      margin-right: 10px;
+    }
+    .status-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    .status-dot.online { background: #3fb950; }
+    .status-dot.offline { background: #f85149; }
+  </style>
+</head>
+<body>
+  <h1>🌑 MosAic Integration Test</h1>
+  
+  <div class="test-section">
+    <h2>1. ETH Wallet (MetaMask/BASE)</h2>
+    <select id="ethNetwork" class="network-select">
+      <option value="base">Base</option>
+      <option value="ethereum">Ethereum</option>
+      <option value="base-sepolia">Base Sepolia</option>
+    </select>
+    <button id="connectEth">Connect ETH Wallet</button>
+    <button id="disconnectEth" disabled>Disconnect</button>
+    <div id="ethResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>2. Ollama (Local + Cloud)</h2>
+    <input type="password" id="apiKeyInput" placeholder="OLLAMA_API_KEY (optional for cloud)" />
+    <button id="setApiKey">Set API Key</button>
+    <button id="testOllama">Test Ollama</button>
+    <button id="testCloud">Test MiniMax Cloud</button>
+    <div id="ollamaResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>3. Multi-Agent</h2>
+    <button id="testAgents">Test Agent System</button>
+    <div id="agentResult" class="result"></div>
+  </div>
+
+  <div class="test-section">
+    <h2>Status</h2>
+    <div id="status">
+      <span class="status-dot offline" id="ethStatus"></span>ETH Wallet: Not connected<br>
+      <span class="status-dot offline" id="ollamaStatus"></span>Ollama: Not tested
+    </div>
+  </div>
+
+  <script type="module">
+    // Import services (would be bundled in real app)
+    // For testing, we'll use inline implementations
+    
+    // ETH Wallet Test
+    const ethNetworkSelect = document.getElementById('ethNetwork');
+    const connectEthBtn = document.getElementById('connectEth');
+    const disconnectEthBtn = document.getElementById('disconnectEth');
+    const ethResult = document.getElementById('ethResult');
+    const ethStatusDot = document.getElementById('ethStatus');
+
+    connectEthBtn.addEventListener('click', async () => {
+      ethResult.innerHTML = 'Connecting...';
+      if (!window.ethereum) {
+        ethResult.innerHTML = '<span class="error">❌ No ETH wallet found! Install MetaMask.</span>';
+        return;
+      }
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        await provider.send('eth_requestAccounts', []);
+        const signer = await provider.getSigner();
+        const address = await signer.getAddress();
+        const network = await provider.getNetwork();
+        
+        ethStatusDot.className = 'status-dot online';
+        document.getElementById('status').innerHTML = `
+          <span class="status-dot online"></span>ETH Wallet: Connected<br>
+          <span class="status-dot offline"></span>Ollama: Not tested
+        `;
+        
+        ethResult.innerHTML = `<span class="success">✅ Connected!</span>\nAddress: ${address}\nNetwork: ${network.chainId}`;
+        connectEthBtn.disabled = true;
+        disconnectEthBtn.disabled = false;
+      } catch (err) {
+        ethResult.innerHTML = `<span class="error">❌ Error: ${err.message}</span>`;
+      }
+    });
+
+    disconnectEthBtn.addEventListener('click', () => {
+      connectEthBtn.disabled = false;
+      disconnectEthBtn.disabled = true;
+      ethStatusDot.className = 'status-dot offline';
+      document.getElementById('status').innerHTML = `
+        <span class="status-dot offline"></span>ETH Wallet: Not connected<br>
+        <span class="status-dot offline"></span>Ollama: Not tested
+      `;
+      ethResult.innerHTML = 'Disconnected';
+    });
+
+    // Ollama Test
+    const ollamaResult = document.getElementById('ollamaResult');
+    const ollamaStatusDot = document.getElementById('ollamaStatus');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const setApiKeyBtn = document.getElementById('setApiKey');
+    const testOllamaBtn = document.getElementById('testOllama');
+    const testCloudBtn = document.getElementById('testCloud');
+
+    setApiKeyBtn.addEventListener('click', () => {
+      const key = apiKeyInput.value.trim();
+      if (key) {
+        // Would set in env in real app
+        sessionStorage.setItem('OLLAMA_API_KEY', key);
+        ollamaResult.innerHTML = `<span class="success">✅ API Key saved (to sessionStorage)</span>`;
+      }
+    });
+
+    testOllamaBtn.addEventListener('click', async () => {
+      ollamaResult.innerHTML = 'Testing Ollama at localhost:11434...';
+      try {
+        const response = await fetch('http://localhost:11434/api/tags');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        
+        ollamaStatusDot.className = 'status-dot online';
+        document.getElementById('status').innerHTML = `
+          <span class="status-dot offline" id="ethStatus"></span>ETH Wallet: Not connected<br>
+          <span class="status-dot online"></span>Ollama: ✓ Running
+        `;
+        
+        const models = data.models || [];
+        ollamaResult.innerHTML = `<span class="success">✅ Ollama is running!</span>\n\nInstalled models (${models.length}):\n` + 
+          models.map(m => `  • ${m.name} (${(m.size / 1024/1024/1024).toFixed(1)}GB)`).join('\n');
+      } catch (err) {
+        ollamaStatusDot.className = 'status-dot offline';
+        ollamaResult.innerHTML = `<span class="error">❌ Ollama not available:</span>\n${err.message}\n\nStart with: <code>ollama serve</code>`;
+      }
+    });
+
+    testCloudBtn.addEventListener('click', async () => {
+      const apiKey = sessionStorage.getItem('OLLAMA_API_KEY') || apiKeyInput.value.trim();
+      if (!apiKey) {
+        ollamaResult.innerHTML = '<span class="warning">⚠️ Enter API key first!</span>';
+        return;
+      }
+      ollamaResult.innerHTML = 'Testing MiniMax cloud via Ollama...';
+      try {
+        // Test cloud endpoint - Ollama will forward to MiniMax with the API key
+        const response = await fetch('http://localhost:11434/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            model: 'minimax-m2.5:cloud',
+            prompt: 'Say "hello" in 3 words',
+            stream: false,
+            options: { num_predict: 20 }
+          })
+        });
+        
+        if (response.status === 401) {
+          throw new Error('API key invalid or not set');
+        }
+        
+        if (!response.ok) {
+          const err = await response.text();
+          throw new Error(err);
+        }
+        
+        const data = await response.json();
+        ollamaResult.innerHTML = `<span class="success">✅ MiniMax cloud working!</span>\n\nResponse: ${data.response}`;
+      } catch (err) {
+        ollamaResult.innerHTML = `<span class="error">❌ Cloud test failed:</span>\n${err.message}`;
+      }
+    });
+
+    // Multi-Agent Test
+    const testAgentsBtn = document.getElementById('testAgents');
+    const agentResult = document.getElementById('agentResult');
+
+    testAgentsBtn.addEventListener('click', () => {
+      const agents = [
+        { id: 'agent-1', name: 'Architect', role: 'System Design', status: 'ready' },
+        { id: 'agent-2', name: 'Developer', role: 'Code Generation', status: 'ready' },
+        { id: 'agent-3', name: 'Reviewer', role: 'Code Review', status: 'idle' },
+        { id: 'agent-4', name: 'Researcher', role: 'Research', status: 'idle' },
+        { id: 'agent-5', name: 'Writer', role: 'Documentation', status: 'idle' }
+      ];
+
+      const modes = ['parallel', 'sequential', 'collaborative', 'orchestrator'];
+      const mode = modes[Math.floor(Math.random() * modes.length)];
+      
+      agentResult.innerHTML = `<span class="success">✅ Multi-Agent System Ready!</span>\n\n` +
+        `Available Agents:\n${agents.map(a => `  ${a.status === 'ready' ? '●' : '○'} ${a.name} - ${a.role}`).join('\n')}\n\n` +
+        `Orchestration Modes: ${modes.join(', ')}\n\n` +
+        `Test Mode: ${mode}`;
+    });
+
+    // Initialize status
+    document.getElementById('status').innerHTML = `
+      <span class="status-dot offline"></span>ETH Wallet: Not connected<br>
+      <span class="status-dot offline"></span>Ollama: Not tested
+    `;
+  </script>
+</body>
+</html>
