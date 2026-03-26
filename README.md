@@ -1,191 +1,62 @@
-# MosAic Companion - Full Integration (2026-03-25)
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
+</div>
 
-## Overview
+# Run and deploy your AI Studio app
 
-Complete multi-chain, multi-model AI agent platform integrating:
-- Multi-Agent Orchestration
-- ETH/BASE Wallet
-- Ollama Local Models
-- Cardano Wallet
-- Midnight Network Privacy
+This contains everything you need to run your app locally.
 
----
+View your app in AI Studio: <https://ai.studio/apps/drive/1G6opS0oqO9Ygn97nFvJGFQJakcx1piny>
 
-## Project Structure
+## Run Locally
 
-```
-projects/mosaic-integration/
-├── README.md                    # This file
-├── package.json                 # Dependencies
-├── src/
-│   ├── services/
-│   │   ├── EthWalletService.ts    # ETH/BASE wallet (MetaMask, Rabby, Coinbase)
-│   │   ├── CardanoWalletService.ts # Cardano wallet (CIP-30)
-│   │   ├── OllamaService.ts        # Local LLM management
-│   │   └── MultiAgentService.ts    # Multi-agent orchestration
-│   ├── components/
-│   │   ├── EthWalletConnect.tsx    # ETH wallet UI
-│   │   ├── CardanoWalletConnect.tsx# Cardano wallet UI
-│   │   ├── ModelSelector.tsx       # Ollama model picker
-│   │   └── MultiAgentPanel.tsx     # Agent orchestration UI
-│   └── types/
-│       ├── ethereum.ts             # ETH types
-│       └── cardano.ts              # Cardano types
-└── projects/
-    └── midnight-mosaic-integration/ # Midnight privacy integration
-        ├── src/
-        │   ├── cardano-wallet.ts
-        │   ├── metadata-delegation.ts
-        │   ├── HyperSharePassConnector.tsx
-        │   └── CreatorPortal.tsx
-        ├── wallet-connector.ts
-        ├── governance-dashboard.ts
-        └── validator-dashboard.ts
-```
+**Prerequisites:** Node.js v20+
 
----
+### Quick Start
 
-## Integration Details
+Run the setup script to install dependencies:
 
-### 1. Multi-Agent System
-
-**Service:** `MultiAgentService.ts`
-- **Modes:** Parallel, Sequential, Collaborative, Orchestrator
-- **Agents:** Architect, Developer, Reviewer, Researcher, Writer
-- **Status:** Ready, Running, Idle, Done, Error
-
-### 2. ETH Wallet Integration
-
-**Service:** `EthWalletService.ts`
-- **Wallets:** MetaMask, Rabby, Coinbase Wallet
-- **Networks:**
-  - Ethereum (chainId: 1)
-  - Base (chainId: 8453)
-  - Base Sepolia (chainId: 84532)
-
-**Node Factories:**
-- Alchemy, Infura, QuickNode, Tenderly
-
-**BASE ANFEs:**
-- Base RPC (public)
-- Base RPC (Infura)
-- Base ANFE-Alchemy
-- Base ANFE-Tenderly
-
-### 3. Ollama Models Integration
-
-**Service:** `OllamaService.ts`
-- **API:** http://localhost:11434
-- **Cloud Models:** Via Ollama with `OLLAMA_API_KEY` env var
-
-**Configuration:**
 ```bash
-# Set API key for cloud models (MiniMax, OpenAI, etc.)
-export OLLAMA_API_KEY="your-api-key-here"
+./setup.sh
 ```
 
-**Supported Local Models:**
-- llama2, llama3, mistral
-- codellama, neural-chat
-- phi3, qwen, aya, solar
-- wizardlm2, orca-mini
+Or manually:
 
-**Cloud Models (via OLLAMA_API_KEY):**
-| Model | Provider | Requires |
-|-------|----------|----------|
-| `minimax-m2.5:cloud` | MiniMax | OLLAMA_API_KEY |
-| `openai/gpt-4` | OpenAI | OLLAMA_API_KEY |
-| `openai/gpt-3.5-turbo` | OpenAI | OLLAMA_API_KEY |
+1. Install dependencies:
+   `npm install`
+2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
+3. Run the app:
+   `npm run dev`
 
-**Features:**
-- List, pull, delete models
-- Generate, chat endpoints
-- Progress tracking on pull
+### Available Scripts
 
-### 4. BASE Integration
+- `npm run dev` - Start development server with hot reload
+- `npm run build` - Build the application for production
+- `npm run start` - Start the Electron app via Forge
+- `npm run preview` - Preview the production build
+- `npm run typecheck` - Run TypeScript type checking without building
+- `npm run clean` - Remove build artifacts
+- `npm run clean:all` - Remove build artifacts, node_modules, and lockfile
 
-Built into EthWalletService:
-- Low-fee transactions
-- ANFE (Account Abstraction Fee Emulator) support
-- ETH/BASE bridge ready
+#### Build Scripts (Electron Forge)
 
-### 5. Cardano Integration
+| Script | Description |
+| -------- | ------------- |
+| `npm run make` | Build for current platform/arch |
+| `npm run make:linux` | Build Linux (native arch) |
+| `npm run make:linux:x64` | Build Linux x64 |
+| `npm run make:linux:arm64` | Build Linux arm64 |
+| `npm run make:mac` | Build macOS (native arch) |
+| `npm run make:mac:x64` | Build macOS x64 |
+| `npm run make:mac:arm64` | Build macOS arm64 |
+| `npm run make:win` | Build Windows (native arch) |
+| `npm run make:win:x64` | Build Windows x64 |
+| `npm run make:win:arm64` | Build Windows arm64 |
+| `npm run deploy` | Build and publish to S3 (native arch) |
+| `npm run deploy:x64` | Build x64 and publish to S3 |
+| `npm run deploy:arm64` | Build arm64 and publish to S3 |
 
-**Service:** `CardanoWalletService.ts` (in midnight-mosaic-integration)
-- **Wallets:** Eternl, Lace, Nami, Yoroi, Flint
-- **Standard:** CIP-30
-- **Access Control:** HyperSharePass NFTs
-  - 1+ NFT → Chat + 1 Agent
-  - 10+ NFT → Rent Compute
+### Helper Scripts
 
-**Policy ID:** `a222abf06e562a5acc7d5bb3bec3d0b29414082e6fe5650026f92d46`
-
-### 6. Midnight Network Integration
-
-**Location:** `projects/midnight-mosaic-integration/`
-- Privacy-preserving smart contracts
-- Zero-knowledge proofs
-- Data DAOs
-- Metadata delegation
-
----
-
-## Usage
-
-### Install Dependencies
-```bash
-npm install ethers @solana/web3.js @solana/wallet-adapter-react
-```
-
-### ETH Wallet Connection
-```typescript
-import { ethWalletService } from './services/EthWalletService';
-
-const state = await ethWalletService.connect('base');
-console.log(state.address, state.network);
-```
-
-### Ollama Model Selection
-```typescript
-import { ollamaService } from './services/OllamaService';
-
-const models = await ollamaService.listModels();
-const response = await ollamaService.chat(messages, 'llama3');
-```
-
-### Multi-Agent Orchestration
-```typescript
-import { multiAgentService } from './services/MultiAgentService';
-
-const result = await multiAgentService.runOrchestration(
-  ['agent-1', 'agent-2'],
-  'Build a todo app',
-  'parallel',
-  executeFn
-);
-```
-
----
-
-## Dependencies
-
-```json
-{
-  "ethers": "^6.x",
-  "react": "^18.x",
-  "typescript": "^5.x",
-  "@solana/web3.js": "^1.x"
-}
-```
-
----
-
-## Status: ✅ COMPLETE
-
-All integrations documented and services created.
-- Multi-Agent: ✅
-- ETH Wallet: ✅
-- Ollama Models: ✅
-- BASE Integration: ✅
-- Cardano: ✅
-- Midnight: ✅
+- `./setup.sh` - Automated setup (installs dependencies, creates .env.local)
+- `./start.sh` - Quick start script (installs dependencies if needed, then starts the app)
